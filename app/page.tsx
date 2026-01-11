@@ -3,11 +3,11 @@ import { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 
 export default function Dashboard() {
-  const [data, setData] = useState([]);
+  // FIX: Explicitly tell TypeScript this is an array of objects
+  const [data, setData] = useState<any[]>([]);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    // This fetches the CSV you put in the public folder
     fetch('/chicago_permits.csv')
       .then(response => response.text())
       .then(csvText => {
@@ -28,7 +28,7 @@ export default function Dashboard() {
       <input 
         type="text" 
         placeholder="Search by neighborhood or work type..." 
-        className="p-3 w-full mb-6 rounded bg-gray-800 border border-gray-700"
+        className="p-3 w-full mb-6 rounded bg-gray-800 border border-gray-700 text-black"
         onChange={(e) => setSearch(e.target.value)}
       />
 
@@ -44,8 +44,8 @@ export default function Dashboard() {
           </thead>
           <tbody>
             {data.filter((row: any) => 
-              row.work_description?.toLowerCase().includes(search.toLowerCase()) ||
-              row.street_name?.toLowerCase().includes(search.toLowerCase())
+              (row.work_description?.toLowerCase().includes(search.toLowerCase()) ||
+              row.street_name?.toLowerCase().includes(search.toLowerCase()))
             ).map((row: any, i) => (
               <tr key={i} className="border-b border-gray-800 hover:bg-gray-850">
                 <td className="p-4 text-green-400 font-bold">${row.reported_cost}</td>
