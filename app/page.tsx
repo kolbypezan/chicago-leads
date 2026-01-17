@@ -38,6 +38,12 @@ export default function Dashboard() {
     alert("Lead details copied to clipboard!");
   };
 
+  const contactApplicant = (row: any) => {
+    const subject = encodeURIComponent(`Regarding Permit for ${row.street_number} ${row.street_name}`);
+    const body = encodeURIComponent(`Hello ${row.contact_1_name || 'Project Manager'},\n\nI saw the recently issued permit for ${row.street_number} ${row.street_name}. I am a local contractor interested in discussing the project with you.\n\nBest regards,`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
   const filteredData = useMemo(() => {
     return data.filter((row: any) => {
       const id = `${row.id || row.permit_}`;
@@ -153,7 +159,7 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* Updated Detail Modal */}
+        {/* Updated Detail Modal with Contact Button */}
         {selectedLead && (
           <div className="fixed inset-0 bg-[#000]/95 backdrop-blur-md flex items-center justify-center p-6 z-50" onClick={() => setSelectedLead(null)}>
              <div className="bg-[#0A0A0A] border border-slate-800 max-w-2xl w-full p-10 rounded-[2.5rem] relative" onClick={e => e.stopPropagation()}>
@@ -175,23 +181,12 @@ export default function Dashboard() {
                 </div>
                 
                 {/* Modal Action Buttons */}
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <button 
-                    onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${selectedLead.street_number}+${selectedLead.street_name}+Chicago+IL`)} 
-                    className="bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-700 transition-all border border-slate-700"
-                  >
-                    View on Map
-                  </button>
-                  <button 
-                    onClick={() => copyToClipboard(selectedLead)} 
-                    className="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-500 transition-all"
-                  >
-                    Share Lead
-                  </button>
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  <button onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${selectedLead.street_number}+${selectedLead.street_name}+Chicago+IL`)} className="bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-[9px] tracking-widest border border-slate-700">Map</button>
+                  <button onClick={() => copyToClipboard(selectedLead)} className="bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-[9px] tracking-widest border border-slate-700">Share</button>
+                  <button onClick={() => contactApplicant(selectedLead)} className="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[9px] tracking-widest">Contact</button>
                 </div>
-                <button onClick={() => setSelectedLead(null)} className="w-full bg-transparent text-slate-500 py-3 rounded-xl font-bold uppercase text-[9px] tracking-widest hover:text-white transition-all">
-                  Close Report
-                </button>
+                <button onClick={() => setSelectedLead(null)} className="w-full bg-transparent text-slate-500 py-3 rounded-xl font-bold uppercase text-[9px] tracking-widest hover:text-white transition-all">Close Report</button>
              </div>
           </div>
         )}
