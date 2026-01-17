@@ -21,7 +21,6 @@ export default function Dashboard() {
         setData(result.data);
         setLoading(false);
       });
-
     const saved = localStorage.getItem('chicago_leads_bookmarks');
     if (saved) setBookmarks(JSON.parse(saved));
   }, []);
@@ -33,8 +32,7 @@ export default function Dashboard() {
     localStorage.setItem('chicago_leads_bookmarks', JSON.stringify(newBookmarks));
   };
 
-  const copyToClipboard = (row: any, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const copyToClipboard = (row: any) => {
     const text = `Lead: ${row.street_number} ${row.street_name}\nValue: $${row.reported_cost}\nWork: ${row.work_description}\nSource: LeadSource Chicago`;
     navigator.clipboard.writeText(text);
     alert("Lead details copied to clipboard!");
@@ -44,25 +42,14 @@ export default function Dashboard() {
     return data.filter((row: any) => {
       const id = `${row.id || row.permit_}`;
       if (showBookmarksOnly && !bookmarks.includes(id)) return false;
-
       const cost = parseFloat(row.reported_cost) || 0;
       const permitType = (row.permit_type || "").toUpperCase();
       const description = (row.work_description || "").toUpperCase();
       const searchUpper = search.toUpperCase();
       const filterUpper = filterType.toUpperCase();
-
-      // Qualification Criteria
       const matchesCost = cost >= 2000;
-      const matchesSearch = 
-        permitType.includes(searchUpper) || 
-        description.includes(searchUpper) || 
-        (row.street_name || "").toUpperCase().includes(searchUpper);
-
-      const matchesType = 
-        filterType === "All" || 
-        permitType.includes(filterUpper) || 
-        description.includes(filterUpper);
-
+      const matchesSearch = permitType.includes(searchUpper) || description.includes(searchUpper) || (row.street_name || "").toUpperCase().includes(searchUpper);
+      const matchesType = filterType === "All" || permitType.includes(filterUpper) || description.includes(filterUpper);
       return matchesCost && matchesSearch && matchesType;
     }).sort((a: any, b: any) => {
       if (sortBy === "cost") return (b.reported_cost || 0) - (a.reported_cost || 0);
@@ -97,37 +84,29 @@ export default function Dashboard() {
           </div>
           <button 
             onClick={() => setShowBookmarksOnly(!showBookmarksOnly)}
-            className={`px-8 py-4 rounded-xl border font-bold transition-all ${showBookmarksOnly ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]' : 'bg-slate-900 border-slate-800 text-slate-400'}`}
+            className={`px-8 py-4 rounded-xl border font-bold transition-all ${showBookmarksOnly ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-400'}`}
           >
             Vault ({bookmarks.length})
           </button>
         </div>
 
-        {/* RESTORED: Professional Filter Set */}
+        {/* Filters */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
           <input 
             type="text" 
-            placeholder="Search address, project type, or keywords..." 
-            className="md:col-span-2 p-5 rounded-xl bg-slate-900/40 border border-slate-800 focus:border-blue-600 focus:ring-0 outline-none transition-all text-white placeholder:text-slate-600"
+            placeholder="Search address or project..." 
+            className="md:col-span-2 p-5 rounded-xl bg-slate-900/40 border border-slate-800 outline-none text-white placeholder:text-slate-600"
             onChange={(e) => { setSearch(e.target.value); setVisibleCount(50); }}
           />
-          <select 
-            className="p-5 rounded-xl bg-slate-900/40 border border-slate-800 outline-none text-slate-300 font-semibold appearance-none hover:border-slate-700 cursor-pointer"
-            onChange={(e) => { setFilterType(e.target.value); setVisibleCount(50); }}
-          >
+          <select className="p-5 rounded-xl bg-slate-900/40 border border-slate-800 text-slate-300" onChange={(e) => setFilterType(e.target.value)}>
             <option value="All">All Sectors</option>
             <option value="ELECTRIC">Electrical</option>
             <option value="PLUMBING">Plumbing</option>
             <option value="NEW CONSTRUCTION">New Construction</option>
-            <option value="ROOFING">Roofing</option>
-            <option value="WRECKING">Demolition</option>
           </select>
-          <select 
-            className="p-5 rounded-xl bg-blue-700 text-white font-bold outline-none hover:bg-blue-600 transition-colors cursor-pointer"
-            onChange={(e) => { setSortBy(e.target.value); setVisibleCount(50); }}
-          >
-            <option value="date">Sort: Newest First</option>
-            <option value="cost">Sort: Highest Value</option>
+          <select className="p-5 rounded-xl bg-blue-700 text-white font-bold" onChange={(e) => setSortBy(e.target.value)}>
+            <option value="date">Newest First</option>
+            <option value="cost">Highest Value</option>
           </select>
         </div>
 
@@ -141,11 +120,11 @@ export default function Dashboard() {
             return (
               <div 
                 key={i} 
-                className={`bg-slate-900/20 border p-7 rounded-2xl hover:bg-slate-900/40 transition-all cursor-pointer group relative ${fresh ? 'border-red-600/50 shadow-[0_0_15px_rgba(220,38,38,0.15)]' : 'border-slate-800/60'}`} 
+                className={`bg-slate-900/20 border p-7 rounded-2xl hover:bg-slate-900/40 transition-all cursor-pointer group relative ${fresh ? 'border-red-600/50' : 'border-slate-800/60'}`} 
                 onClick={() => setSelectedLead(row)}
               >
                 {fresh && (
-                  <div className="absolute -top-3 left-6 bg-red-600 text-white text-[9px] font-black px-3 py-1 rounded-full animate-pulse uppercase tracking-widest border border-red-400">
+                  <div className="absolute -top-3 left-6 bg-red-600 text-white text-[9px] font-black px-3 py-1 rounded-full animate-pulse uppercase border border-red-400">
                     NEW LEAD
                   </div>
                 )}
@@ -154,18 +133,18 @@ export default function Dashboard() {
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-3">
                       <span className="text-3xl font-bold tracking-tighter text-white">{formatCurrency(row.reported_cost)}</span>
-                      <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest px-3 py-1 bg-blue-500/5 rounded-full border border-blue-500/10">
+                      <span className="text-[10px] font-bold text-blue-500 uppercase px-3 py-1 bg-blue-500/5 rounded-full border border-blue-500/10">
                         {row.permit_type?.split('-')[1] || 'General'}
                       </span>
                     </div>
-                    <h3 className="text-xl font-bold text-slate-100 uppercase group-hover:text-blue-500 transition-colors">
-                      {row.street_number} {row.street_name}
-                    </h3>
+                    <h3 className="text-xl font-bold text-slate-100 uppercase">{row.street_number} {row.street_name}</h3>
                   </div>
                   <div className="flex gap-3">
-                    <button onClick={(e) => copyToClipboard(row, e)} className="px-6 py-3 rounded-xl bg-slate-800/50 border border-slate-700 text-slate-400 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest">Share</button>
-                    <button onClick={(e) => toggleBookmark(leadId, e)} className={`px-6 py-3 rounded-xl border font-black text-[10px] uppercase tracking-widest transition-all ${bookmarked ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}>
+                    <button onClick={(e) => toggleBookmark(leadId, e)} className={`px-6 py-3 rounded-xl border font-black text-[10px] uppercase transition-all ${bookmarked ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}>
                       {bookmarked ? 'Saved' : 'Save'}
+                    </button>
+                    <button className="px-6 py-3 rounded-xl bg-white text-black font-black text-[10px] uppercase hover:bg-blue-600 hover:text-white transition-all">
+                      View Lead Details
                     </button>
                   </div>
                 </div>
@@ -174,11 +153,12 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* Detail Modal */}
+        {/* Updated Detail Modal */}
         {selectedLead && (
           <div className="fixed inset-0 bg-[#000]/95 backdrop-blur-md flex items-center justify-center p-6 z-50" onClick={() => setSelectedLead(null)}>
              <div className="bg-[#0A0A0A] border border-slate-800 max-w-2xl w-full p-10 rounded-[2.5rem] relative" onClick={e => e.stopPropagation()}>
-                <h2 className="text-3xl font-black text-white mb-2">{selectedLead.street_number} {selectedLead.street_name}</h2>
+                <p className="text-blue-600 font-bold uppercase text-[9px] tracking-[0.3em] mb-2">Project Intelligence Report</p>
+                <h2 className="text-4xl font-black text-white mb-2">{selectedLead.street_number} {selectedLead.street_name}</h2>
                 <div className="grid grid-cols-2 gap-4 my-8">
                   <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 text-center">
                     <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Estimated Cost</p>
@@ -189,8 +169,29 @@ export default function Dashboard() {
                     <p className="text-2xl font-bold text-white uppercase">{selectedLead.issue_date?.split('T')[0]}</p>
                   </div>
                 </div>
-                <p className="text-slate-400 italic mb-10 text-center leading-relaxed">"{selectedLead.work_description}"</p>
-                <button onClick={() => setSelectedLead(null)} className="w-full bg-slate-800 text-white py-5 rounded-xl font-black uppercase text-xs tracking-[0.2em]">Close Report</button>
+                <div className="bg-slate-950 p-6 rounded-xl border border-slate-900 mb-8">
+                  <p className="text-slate-500 text-[9px] font-bold uppercase mb-2">Scope of Work</p>
+                  <p className="text-slate-300 italic text-sm leading-relaxed">"{selectedLead.work_description}"</p>
+                </div>
+                
+                {/* Modal Action Buttons */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <button 
+                    onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${selectedLead.street_number}+${selectedLead.street_name}+Chicago+IL`)} 
+                    className="bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-700 transition-all border border-slate-700"
+                  >
+                    View on Map
+                  </button>
+                  <button 
+                    onClick={() => copyToClipboard(selectedLead)} 
+                    className="bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-500 transition-all"
+                  >
+                    Share Lead
+                  </button>
+                </div>
+                <button onClick={() => setSelectedLead(null)} className="w-full bg-transparent text-slate-500 py-3 rounded-xl font-bold uppercase text-[9px] tracking-widest hover:text-white transition-all">
+                  Close Report
+                </button>
              </div>
           </div>
         )}
