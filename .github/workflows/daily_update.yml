@@ -1,0 +1,32 @@
+name: Daily Permit Update
+
+on:
+  schedule:
+    - cron: '0 13 * * *' # 8:00 AM Chicago time
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install pandas sodapy
+
+      - name: Run Update Script
+        run: python update_permits.py
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "LeadBot"
+          git config --global user.email "bot@yourdomain.com"
+          git add public/chicago_permits.csv
+          git commit -m "Automated Daily Lead Update" || exit 0
+          git push
